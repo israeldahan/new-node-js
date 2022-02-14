@@ -68,14 +68,14 @@ async function upsertMovie(request, response, next) {
   }
 
   const { title, img, synopsis, rating, year } = request.body
-
+  const user = request.user
   const movie = await MoviesService.getByTitle(title)
   const doesMovieExist = !!movie
   if (doesMovieExist) {
     const updatedMovie = await MoviesService.updateMovie(movie.movie_id, { title, img, synopsis, rating, year })
     return response.status(200).json(updatedMovie)
   } else {
-    const newMovie = await MoviesService.createMovie({ title, img, synopsis, rating, year })
+    const newMovie = await MoviesService.createMovie({ title, img, synopsis, rating, year }, user)
     return response.status(201).json(newMovie)
   }
 }

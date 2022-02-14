@@ -1,5 +1,6 @@
 const { server } = require('../server')
 const User = require('../db/models/user')
+const Movie = require('../db/models/movie')
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken');
 const INITIAL_MOVIES = require('../services/movies.json')
@@ -11,8 +12,9 @@ dbDocArray.limit = sinon.spy()
 
 beforeEach(() => {
   //TODO you find it :) Uncomment it and see that some tests back to work. some of them still need to be fixed
-  // sinon.stub(User, "findOne").returns(User({ name: "yoni", email: "bubu", password: "sdadd", token: "asdasd" }))
-  // sinon.stub(jwt, "verify").returns({})
+  sinon.stub(User, "findOne").returns(User({ name: "yoni", email: "bubu", password: "sdadd", token: "asdasd" }))
+  // sinon.stub(Movie, "find").returns(dbDocArray)
+  sinon.stub(jwt, "verify").returns({})
   sinon.stub(mongoose)
 })
 

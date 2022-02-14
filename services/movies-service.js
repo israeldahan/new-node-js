@@ -2,7 +2,7 @@ const INITIAL_MOVIES = require('./movies.json')
 const { loadAllData, Movie } = require('../db/')
 const InternalError = require('../errors/InternalErorr')
 const Unauthorized = require('../errors/UnauthorizedError')
-process.env.RESET_DB && loadAllData(INITIAL_MOVIES.movies)
+!!process.env.RESET_DB && loadAllData(INITIAL_MOVIES.movies)
 
 async function getAllMovies(offset, limit) {
   const request = Movie.find()

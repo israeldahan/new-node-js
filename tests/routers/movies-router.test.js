@@ -4,18 +4,20 @@ const { app } = require('../../server')
 const { Movie } = require('../../db')
 const INITIAL_MOVIES = require('../../services/movies.json')
 const { sinon, dbDocArray } = require('../test-helper')
-
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MWZhZThhOWY1NTdiMmJkZTczNmVmMzUiLCJpYXQiOjE2NDQzNDk5MDZ9.wKz0hmiWEY5HtVoHKVqnmIJXygnIS8MO7E1gNU1_TEw'
 
 describe('Movies Controller', () => {
   describe('GET /movies', function () {
     context('without query params', () => {
-      it('should have status code 200', async function () {
+      it('should have status code 200', async  () => {
         const mock = sinon.stub(Movie, "find").returns(dbDocArray)
-        const response = await supertest(app).get('/movies').expect(200)
+        const response = await supertest(app).get('/movies')
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
         expect(mock.calledOnce).to.be.true
-
         expect(response.body).to.exist
         expect(response.body.movies).to.be.an('array').with.lengthOf(INITIAL_MOVIES.movies.length)
+        
       })
     })
 
@@ -23,7 +25,9 @@ describe('Movies Controller', () => {
       context('when limit=10 and offset=10', () => {
         it('should return 10 items', async () => {
           sinon.stub(Movie, "find").returns(dbDocArray)
-          const response = await supertest(app).get('/movies?limit=10&offset=20').expect(200)
+          const response = await supertest(app).get('/movies?limit=10&offset=20')
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
           expect(dbDocArray.skip.calledWith(20)).to.be.true
           expect(dbDocArray.limit.calledWith(10)).to.be.true
           expect(response.body).to.exist
@@ -38,7 +42,9 @@ describe('Movies Controller', () => {
       it('should have status code 200 with the correct movie object', async function () {
         const existingMovie = dbDocArray[dbDocArray.length - 1]
         sinon.stub(Movie, "findOne").withArgs({ movie_id: existingMovie.movie_id }).returns(existingMovie)
-        const response = await supertest(app).get(`/movies/${existingMovie.movie_id}`).expect(200)
+        const response = await supertest(app).get(`/movies/${existingMovie.movie_id}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
 
         expect(response.body).to.exist
         expect(response.body.movie_id).to.eq(existingMovie.movie_id)
@@ -54,7 +60,9 @@ describe('Movies Controller', () => {
       it('should return status code 404', async () => {
         const id = 999
         sinon.stub(Movie, "findOne").withArgs().returns(undefined)
-        const response = await supertest(app).get(`/movies/${id}`).expect(404)
+        const response = await supertest(app).get(`/movies/${id}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
 
         expect(response.body).to.exist
         expect(response.body.error).to.eq(`no movie with id ${id}`)
@@ -73,13 +81,17 @@ describe('Movies Controller', () => {
 
         const newMovieDetails = {
           title: 'new movie title',
-          img: 'new movie img',
+          img: 'http://google.com/1.jpg',
           synopsis: 'new movie synopsis',
           rating: 5,
           year: 2021,
         }
 
-        const response = await supertest(app).post('/movies').send(newMovieDetails).expect(201)
+        const response = await supertest(app).post('/movies')
+        .set('Authorization', 'bearer ' + token)
+        .send(newMovieDetails, )
+        .expect(201)
+        
 
         expect(response.body).to.exist
         expect(response.body.movie_id).to.be.greaterThan(lastId)
@@ -93,7 +105,9 @@ describe('Movies Controller', () => {
     context('when this is an invalid movie object', () => {
       it('should return InvalidMovieParamError', async function () {
         const newMovieDetails = {}
-        const response = await supertest(app).post('/movies').send(newMovieDetails).expect(400)
+        const response = await supertest(app).post('/movies').send(newMovieDetails)
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
 
         expect(response.body).to.exist
         expect(response.body.error).to.exist
@@ -113,12 +127,16 @@ describe('Movies Controller', () => {
 
         const newMovieDetails = {
           title: 'new movie title',
-          img: 'new movie img',
+          img: 'http://google.com/1.jpg',
           synopsis: 'new movie synopsis',
           rating: 5,
           year: 2021,
         }
-        const response = await supertest(app).put('/movies').send(newMovieDetails).expect(201)
+        const response = await supertest(app)
+        .put('/movies')
+        .set('Authorization', 'bearer ' + token)
+        .send(newMovieDetails)
+        .expect(201)
 
         expect(response.body).to.exist
         expect(response.body.movie_id).to.be.greaterThan(lastId)
@@ -156,7 +174,9 @@ describe('Movies Controller', () => {
               year: newYear
             }).returns(updatedMovieDetails)
 
-        const response = await supertest(app).put('/movies').send(updatedMovieDetails).expect(200)
+        const response = await supertest(app).put('/movies')
+        .set('Authorization', 'bearer ' + token)
+        .send(updatedMovieDetails).expect(200)
 
         expect(response.body).to.exist
         expect(response.body.title).to.eq(existingMovie.title)
@@ -173,7 +193,9 @@ describe('Movies Controller', () => {
     context('when id of movie doesnt exist', () => {
       it('should return status code 404', async () => {
         sinon.stub(Movie, "findOne").withArgs(999).returns(undefined)
-        const response = await supertest(app).patch('/movies/999').send({}).expect(404)
+        const response = await supertest(app).patch('/movies/999')
+        .set('Authorization', 'bearer ' + token)
+        .send({}).expect(404)
 
         expect(response.body).to.exist
         expect(response.body.error).to.eq(`no movie with id 999`)
@@ -211,6 +233,7 @@ describe('Movies Controller', () => {
 
         const response = await supertest(app)
           .patch(`/movies/${existingMovie.movie_id}`)
+          .set('Authorization', 'bearer ' + token)
           .send(partialUpdatedMovieDetails)
           .expect(200)
 
@@ -230,7 +253,9 @@ describe('Movies Controller', () => {
       it('should return status code 404', async () => {
         const idToDelete = 999
         sinon.stub(Movie, "findOneAndDelete").withArgs({ movie_id: idToDelete }).returns(undefined)
-        const response = await supertest(app).delete(`/movies/${idToDelete}`).send({}).expect(404)
+        const response = await supertest(app).delete(`/movies/${idToDelete}`)
+        .set('Authorization', 'bearer ' + token)
+        .send({}).expect(404)
 
         expect(response.body).to.exist
         expect(response.body.error).to.eq(`no movie with id ${idToDelete}`)
@@ -243,7 +268,9 @@ describe('Movies Controller', () => {
         const stub = sinon.stub(Movie, "findOneAndDelete").withArgs({ movie_id: existingMovie.movie_id })
         stub.onFirstCall().returns(existingMovie)
         stub.onSecondCall().returns(undefined)
-        const response = await supertest(app).delete(`/movies/${existingMovie.movie_id}`).expect(200)
+        const response = await supertest(app).delete(`/movies/${existingMovie.movie_id}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
 
         expect(response.body).to.exist
         expect(response.body.movie_id).to.eq(existingMovie.movie_id)
